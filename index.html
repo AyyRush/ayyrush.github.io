@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Minecraft Server Status</title>
+  <link rel="stylesheet" href="../css/style.css" />
+</head>
+<body>
+  <div class="container">
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <img src="../img/gg.gif" alt="Logo" style="height: 48px; border-radius: 8px;" />
+      <h1>Rush Minecraft Server Status</h1>
+    </div>
+    <p class="subtitle">Check the status of your Minecraft server easily!</p>
+
+    <div class="input-section">
+      <input type="text" id="server-ip" placeholder="mc.bandynetwork.it" />
+      <button onclick="checkStatus()">Submit</button>
+    </div>
+
+    <div id="server-status" class="status-box">
+      <p class="status-label">Status:</p>
+      <span class="status-value offline" id="status-value">Offline</span>
+
+      <div class="status-entry"><span>Host</span><span id="host-value">-</span></div>
+      <div class="status-entry"><span>Port</span><span id="port-value">-</span></div>
+      <div class="status-entry"><span>Players</span><span id="players-value">-</span></div>
+      <div class="status-entry"><span>Version</span><span id="version-value">-</span></div>
+      <div class="status-entry">
+        <span>Icon</span>
+        <img id="server-icon" src="" alt="Server Icon" width="64" height="64" style="display: none; border-radius: 8px;" />
+      </div>
+      <div class="status-entry"><span>MOTD</span><span id="motd-value">-</span></div>
+
+      <!-- Additional Info -->
+      <div class="status-entry"><span>Hosting Type</span><span id="hosting-type">-</span></div>
+      <div class="status-entry"><span>Site Script Version</span><span>1.0.0</span></div>
+
+    </div>
+  </div>
+
+  <footer style="margin-top: 48px; text-align: center; color: #aaa; font-size: 0.9em;">
+    <p>© 2025 Rush Tools | Powered by <a href="https://mcstatus.io" target="_blank" style="color: #4af;">mcstatus.io</a></p>
+    <p>Server check tool built for Minecraft Java Edition servers</p>
+  </footer>
+
+  <script>
+    async function checkStatus() {
+      const ipInput = document.getElementById("server-ip");
+      const address = ipInput.value.trim() || "mc.bandynetwork.it";
+
+      const statusValue = document.getElementById("status-value");
+      const hostValue = document.getElementById("host-value");
+      const portValue = document.getElementById("port-value");
+      const motdValue = document.getElementById("motd-value");
+      const iconEl = document.getElementById("server-icon");
+      const playersValue = document.getElementById("players-value");
+      const versionValue = document.getElementById("version-value");
+
+      try {
+        const response = await fetch(`https://api.mcstatus.io/v2/status/java/${address}`);
+        const data = await response.json();
+
+        if (data.online) {
+          statusValue.textContent = "Online";
+          statusValue.classList.remove("offline");
+          statusValue.classList.add("online");
+
+          hostValue.textContent = data.host || address;
+          portValue.textContent = (data.port !== undefined) ? data.port : "-";
+          playersValue.textContent = `${data.players.online}/${data.players.max}`;
+            if (data.version && data.version.name_clean) {
+            versionValue.textContent = data.version.name_clean;
+            } else if (data.version && data.version.name) {
+            versionValue.textContent = data.version.name;
+            } else {
+            versionValue.textContent = "-";
+            }
+
+
+            // Rileva tipo di hosting da version.name
+            const hostingTypeEl = document.getElementById("hosting-type");
+            const versionLower = (data.version.name || "").toLowerCase();
+
+            if (versionLower.includes("bungee")) {
+            hostingTypeEl.textContent = "BungeeCord";
+            } else if (versionLower.includes("velocity")) {
+            hostingTypeEl.textContent = "Velocity";
+            } else {
+            hostingTypeEl.textContent = "Unknown";
+            }
+
+          motdValue.innerHTML = data.motd.html || "-";
+
+          if (data.icon) {
+            iconEl.src = data.icon;
+            iconEl.style.display = "inline-block";
+          } else {
+            iconEl.style.display = "none";
+          }
+        } else {
+          statusValue.textContent = "Offline";
+          statusValue.classList.remove("online");
+          statusValue.classList.add("offline");
+
+          hostValue.textContent = address;
+          portValue.textContent = "-";
+          playersValue.textContent = "-";
+          versionValue.textContent = "-";
+          motdValue.textContent = "-";
+          iconEl.style.display = "none";
+        }
+      } catch (error) {
+        console.error("Error fetching server status:", error);
+        statusValue.textContent = "Error";
+        statusValue.classList.remove("online");
+        statusValue.classList.add("offline");
+
+        hostValue.textContent = "-";
+        portValue.textContent = "-";
+        playersValue.textContent = "-";
+        versionValue.textContent = "-";
+        motdValue.textContent = "-";
+        iconEl.style.display = "none";
+      } 
+    }
+
+    checkStatus();
+  </script>
+</body>
+</html>
