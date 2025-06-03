@@ -3,20 +3,19 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Minecraft Server Status</title>
+  <title>Rush Minecraft Server Status</title>
   <link rel="stylesheet" href="style.css" />
+  <link rel="icon" href="head.ico" type="image/x-icon" />
 </head>
 <body>
 
-  
-    <div class="container">
-      <div class="status-box" style="margin-top: 32px;">
-    <div class="status-entry">
-  <span>Total Visits</span>
-  <span id="visits-total">-</span>
-</div>
-
-  </div> 
+  <div class="container">
+    <div class="status-box" style="margin-top: 32px;">
+      <div class="status-entry">
+        <span>Total Visits</span>
+        <span id="visits-total">-</span>
+      </div>
+    </div>
 
     <div style="display: flex; align-items: center; gap: 12px;">
       <img src="gg.gif" alt="Logo" style="height: 48px; border-radius: 8px;" />
@@ -42,11 +41,16 @@
         <img id="server-icon" src="" alt="Server Icon" width="64" height="64" style="display: none; border-radius: 8px;" />
       </div>
       <div class="status-entry"><span>MOTD</span><span id="motd-value">-</span></div>
-
-      <!-- Additional Info -->
       <div class="status-entry"><span>Hosting Type</span><span id="hosting-type">-</span></div>
       <div class="status-entry"><span>Site Script Version</span><span>1.0.0</span></div>
 
+      <!-- Nuove informazioni -->
+      <div class="status-entry"><span>Mods</span><span id="mods-value">N/A</span></div>
+      <div class="status-entry"><span>Plugins</span><span id="plugins-value">N/A</span></div>
+      <div class="status-entry"><span>EULA Blocked</span><span id="eula-value">-</span></div>
+      <div class="status-entry"><span>Protocol Version</span><span id="protocol-value">-</span></div>
+      <div class="status-entry"><span>Software</span><span id="software-value">N/A</span></div>
+      <div class="status-entry"><span>SRV Record</span><span id="srv-value">-</span></div>
     </div>
   </div>
 
@@ -67,6 +71,14 @@
       const iconEl = document.getElementById("server-icon");
       const playersValue = document.getElementById("players-value");
       const versionValue = document.getElementById("version-value");
+      const hostingTypeEl = document.getElementById("hosting-type");
+
+      const modsValue = document.getElementById("mods-value");
+      const pluginsValue = document.getElementById("plugins-value");
+      const eulaValue = document.getElementById("eula-value");
+      const protocolValue = document.getElementById("protocol-value");
+      const softwareValue = document.getElementById("software-value");
+      const srvValue = document.getElementById("srv-value");
 
       try {
         const response = await fetch(`https://api.mcstatus.io/v2/status/java/${address}`);
@@ -78,30 +90,27 @@
           statusValue.classList.add("online");
 
           hostValue.textContent = data.host || address;
-          portValue.textContent = (data.port !== undefined) ? data.port : "-";
+          portValue.textContent = data.port ?? "-";
           playersValue.textContent = `${data.players.online}/${data.players.max}`;
-            if (data.version && data.version.name_clean) {
+
+          if (data.version?.name_clean) {
             versionValue.textContent = data.version.name_clean;
-            } else if (data.version && data.version.name) {
+          } else if (data.version?.name) {
             versionValue.textContent = data.version.name;
-            } else {
+          } else {
             versionValue.textContent = "-";
-            }
+          }
 
-
-            // Rileva tipo di hosting da version.name
-            const hostingTypeEl = document.getElementById("hosting-type");
-            const versionLower = (data.version.name || "").toLowerCase();
-
-            if (versionLower.includes("bungee")) {
+          const versionLower = (data.version?.name || "").toLowerCase();
+          if (versionLower.includes("bungee")) {
             hostingTypeEl.textContent = "BungeeCord";
-            } else if (versionLower.includes("velocity")) {
+          } else if (versionLower.includes("velocity")) {
             hostingTypeEl.textContent = "Velocity";
-            } else {
+          } else {
             hostingTypeEl.textContent = "Unknown";
-            }
+          }
 
-          motdValue.innerHTML = data.motd.html || "-";
+          motdValue.innerHTML = data.motd?.html || "-";
 
           if (data.icon) {
             iconEl.src = data.icon;
@@ -109,6 +118,14 @@
           } else {
             iconEl.style.display = "none";
           }
+
+          // Nuovi dati
+          modsValue.textContent = data.mods?.names?.join(", ") || "N/A";
+          pluginsValue.textContent = data.plugins?.names?.join(", ") || "N/A";
+          eulaValue.textContent = data.eula_blocked ? "Yes" : "No";
+          protocolValue.textContent = data.version?.protocol || "-";
+          softwareValue.textContent = data.software || "N/A";
+          srvValue.textContent = data.srv_record ? "Yes" : "No";
         } else {
           statusValue.textContent = "Offline";
           statusValue.classList.remove("online");
@@ -120,6 +137,13 @@
           versionValue.textContent = "-";
           motdValue.textContent = "-";
           iconEl.style.display = "none";
+
+          modsValue.textContent = "N/A";
+          pluginsValue.textContent = "N/A";
+          eulaValue.textContent = "-";
+          protocolValue.textContent = "-";
+          softwareValue.textContent = "N/A";
+          srvValue.textContent = "-";
         }
       } catch (error) {
         console.error("Error fetching server status:", error);
@@ -133,22 +157,37 @@
         versionValue.textContent = "-";
         motdValue.textContent = "-";
         iconEl.style.display = "none";
-      } 
-    }
-     async function updateTotalVisits() {
-    try {
-      const response = await fetch("https://abacus.jasoncameron.dev/hit/www.rushstatus.it/visited");
-      const data = await response.json();
-      document.getElementById("visits-total").textContent = data.value;
-    } catch (error) {
-      console.error("Errore nel contatore visite:", error);
-      document.getElementById("visits-total").textContent = "Err";
-    }
-  }
 
-  updateTotalVisits();
-  checkStatus();
-</script>
+        modsValue.textContent = "N/A";
+        pluginsValue.textContent = "N/A";
+        eulaValue.textContent = "-";
+        protocolValue.textContent = "-";
+        softwareValue.textContent = "N/A";
+        srvValue.textContent = "-";
+      }
+    }
+
+    async function updateTotalVisits() {
+      try {
+        const response = await fetch("https://abacus.jasoncameron.dev/hit/www.rushstatus.it/visited");
+        const data = await response.json();
+        document.getElementById("visits-total").textContent = data.value;
+      } catch (error) {
+        console.error("Errore nel contatore visite:", error);
+        document.getElementById("visits-total").textContent = "Err";
+      }
+    }
+
+    // Invio con "Enter"
+    document.getElementById("server-ip").addEventListener("keypress", function (event) {
+      if (event.key === "Enter") {
+        checkStatus();
+      }
+    });
+
+    // Caricamento iniziale
+    updateTotalVisits();
+    checkStatus();
   </script>
 </body>
 </html>
