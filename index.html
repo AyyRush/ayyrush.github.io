@@ -135,23 +135,20 @@
         iconEl.style.display = "none";
       } 
     }
-      async function updateTotalVisits() {
-        try {
-          const response = await fetch("https://abacus.jasoncameron.dev/hit/www.rushstatus.it/visite");
-          const data = await response.json();
-          document.getElementById("visits-total").textContent = data.value;
-        } catch (error) {
-          console.error("Errore nel contatore visite:", error);
-          document.getElementById("visits-total").textContent = "Err";
-        }
-      }
+     async function updateTotalVisits() {
+    try {
+      const response = await fetch("https://abacus.jasoncameron.dev/hit/www.rushstatus.it/visited");
+      const data = await response.json();
+      document.getElementById("visits-total").textContent = data.value;
+    } catch (error) {
+      console.error("Errore nel contatore visite:", error);
+      document.getElementById("visits-total").textContent = "Err";
+    }
+  }
 
-
-
-  updateVisitCounters();
-
-
-    checkStatus();
+  updateTotalVisits();
+  checkStatus();
+</script>
   </script>
 </body>
 </html>
