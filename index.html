@@ -3,19 +3,17 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Rush Minecraft Server Status</title>
+  <title>Minecraft Server Status</title>
   <link rel="stylesheet" href="style.css" />
-  <link rel="icon" href="head.ico" type="image/x-icon" />
 </head>
 <body>
-
   <div class="container">
     <div class="status-box" style="margin-top: 32px;">
       <div class="status-entry">
         <span>Total Visits</span>
         <span id="visits-total">-</span>
       </div>
-    </div>
+    </div> 
 
     <div style="display: flex; align-items: center; gap: 12px;">
       <img src="gg.gif" alt="Logo" style="height: 48px; border-radius: 8px;" />
@@ -36,21 +34,24 @@
       <div class="status-entry"><span>Port</span><span id="port-value">-</span></div>
       <div class="status-entry"><span>Players</span><span id="players-value">-</span></div>
       <div class="status-entry"><span>Version</span><span id="version-value">-</span></div>
+      <div class="status-entry"><span>MOTD</span><span id="motd-value">-</span></div>
+      <div class="status-entry"><span>Hosting Type</span><span id="hosting-type">-</span></div>
+      <div class="status-entry"><span>NameMC Likes</span><span id="namemc-likes">-</span></div>
+
+      <!-- Extra Server Info -->
+      <div class="status-entry"><span>Mods</span><span id="mods-value">N/A</span></div>
+      <div class="status-entry"><span>Plugins</span><span id="plugins-value">N/A</span></div>
+      <div class="status-entry"><span>EULA Blocked</span><span id="eula-value">No</span></div>
+      <div class="status-entry"><span>Protocol Version</span><span id="protocol-value">-</span></div>
+      <div class="status-entry"><span>Software</span><span id="software-value">N/A</span></div>
+      <div class="status-entry"><span>SRV Record</span><span id="srv-value">-</span></div>
+
       <div class="status-entry">
         <span>Icon</span>
         <img id="server-icon" src="" alt="Server Icon" width="64" height="64" style="display: none; border-radius: 8px;" />
       </div>
-      <div class="status-entry"><span>MOTD</span><span id="motd-value">-</span></div>
-      <div class="status-entry"><span>Hosting Type</span><span id="hosting-type">-</span></div>
-      <div class="status-entry"><span>Site Script Version</span><span>5.2.1</span></div>
 
-      <!-- Nuove informazioni -->
-      <div class="status-entry"><span>Mods</span><span id="mods-value">N/A</span></div>
-      <div class="status-entry"><span>Plugins</span><span id="plugins-value">N/A</span></div>
-      <div class="status-entry"><span>EULA Blocked</span><span id="eula-value">-</span></div>
-      <div class="status-entry"><span>Protocol Version</span><span id="protocol-value">-</span></div>
-      <div class="status-entry"><span>Software</span><span id="software-value">N/A</span></div>
-      <div class="status-entry"><span>SRV Record</span><span id="srv-value">-</span></div>
+      <div class="status-entry"><span>Site Script Version</span><span>1.0.0</span></div>
     </div>
   </div>
 
@@ -72,6 +73,7 @@
       const playersValue = document.getElementById("players-value");
       const versionValue = document.getElementById("version-value");
       const hostingTypeEl = document.getElementById("hosting-type");
+      const namemcLikes = document.getElementById("namemc-likes");
 
       const modsValue = document.getElementById("mods-value");
       const pluginsValue = document.getElementById("plugins-value");
@@ -92,14 +94,7 @@
           hostValue.textContent = data.host || address;
           portValue.textContent = data.port ?? "-";
           playersValue.textContent = `${data.players.online}/${data.players.max}`;
-
-          if (data.version?.name_clean) {
-            versionValue.textContent = data.version.name_clean;
-          } else if (data.version?.name) {
-            versionValue.textContent = data.version.name;
-          } else {
-            versionValue.textContent = "-";
-          }
+          versionValue.textContent = data.version?.name_clean || data.version?.name || "-";
 
           const versionLower = (data.version?.name || "").toLowerCase();
           if (versionLower.includes("bungee")) {
@@ -111,21 +106,27 @@
           }
 
           motdValue.innerHTML = data.motd?.html || "-";
+          iconEl.style.display = data.icon ? "inline-block" : "none";
+          if (data.icon) iconEl.src = data.icon;
 
-          if (data.icon) {
-            iconEl.src = data.icon;
-            iconEl.style.display = "inline-block";
-          } else {
-            iconEl.style.display = "none";
+          // Extra data
+          modsValue.textContent = data.mods?.length || "N/A";
+          pluginsValue.textContent = data.plugins?.length || "N/A";
+          eulaValue.textContent = data.eula_blocked ? "Yes" : "No";
+          protocolValue.textContent = data.protocol?.version || "-";
+          softwareValue.textContent = data.software || "N/A";
+          srvValue.textContent = data.srv_record ?? "-";
+
+          // NameMC Likes
+          try {
+            const likesResponse = await fetch(`https://api.namemc.com/server/${address}/likes`);
+            const likesData = await likesResponse.json();
+            namemcLikes.textContent = likesData.length;
+          } catch (e) {
+            console.warn("Errore nel recuperare i likes da NameMC:", e);
+            namemcLikes.textContent = "-";
           }
 
-          // Nuovi dati
-          modsValue.textContent = data.mods?.names?.join(", ") || "N/A";
-          pluginsValue.textContent = data.plugins?.names?.join(", ") || "N/A";
-          eulaValue.textContent = data.eula_blocked ? "Yes" : "No";
-          protocolValue.textContent = data.version?.protocol || "-";
-          softwareValue.textContent = data.software || "N/A";
-          srvValue.textContent = data.srv_record ? "Yes" : "No";
         } else {
           statusValue.textContent = "Offline";
           statusValue.classList.remove("online");
@@ -138,9 +139,12 @@
           motdValue.textContent = "-";
           iconEl.style.display = "none";
 
+          hostingTypeEl.textContent = "-";
+          namemcLikes.textContent = "-";
+
           modsValue.textContent = "N/A";
           pluginsValue.textContent = "N/A";
-          eulaValue.textContent = "-";
+          eulaValue.textContent = "No";
           protocolValue.textContent = "-";
           softwareValue.textContent = "N/A";
           srvValue.textContent = "-";
@@ -157,10 +161,12 @@
         versionValue.textContent = "-";
         motdValue.textContent = "-";
         iconEl.style.display = "none";
+        hostingTypeEl.textContent = "-";
+        namemcLikes.textContent = "-";
 
         modsValue.textContent = "N/A";
         pluginsValue.textContent = "N/A";
-        eulaValue.textContent = "-";
+        eulaValue.textContent = "No";
         protocolValue.textContent = "-";
         softwareValue.textContent = "N/A";
         srvValue.textContent = "-";
@@ -169,7 +175,7 @@
 
     async function updateTotalVisits() {
       try {
-        const response = await fetch("https://abacus.jasoncameron.dev/hit/www.rushstatus.it/visited");
+        const response = await fetch("https://abacus.jasoncameron.dev/hit/www.rushstatus.it/visite");
         const data = await response.json();
         document.getElementById("visits-total").textContent = data.value;
       } catch (error) {
@@ -178,14 +184,14 @@
       }
     }
 
-    // Invio con "Enter"
-    document.getElementById("server-ip").addEventListener("keypress", function (event) {
-      if (event.key === "Enter") {
+    // Trigger invio con ENTER
+    document.getElementById("server-ip").addEventListener("keypress", function (e) {
+      if (e.key === "Enter") {
         checkStatus();
       }
     });
 
-    // Caricamento iniziale
+    // Esecuzioni iniziali
     updateTotalVisits();
     checkStatus();
   </script>
